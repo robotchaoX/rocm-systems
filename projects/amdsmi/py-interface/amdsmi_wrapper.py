@@ -2407,6 +2407,22 @@ struct_amdsmi_temp_range_refresh_rate_t._fields_ = [
 ]
 
 amdsmi_temp_range_refresh_rate_t = struct_amdsmi_temp_range_refresh_rate_t
+
+# HSMP Enabled Commands Structure
+class struct_amdsmi_hsmp_enabled_commands_t(Structure):
+    pass
+
+struct_amdsmi_hsmp_enabled_commands_t._pack_ = 1 # source:False
+struct_amdsmi_hsmp_enabled_commands_t_fields_ = [
+        ('read_mask', ctypes.c_bool),    # Input: tells function what to get
+        ('arg0', ctypes.c_uint32),       # Output: BitMask0
+        ('arg1', ctypes.c_uint32),       # Output: BitMask1
+        ('arg2', ctypes.c_uint32),       # Output: BitMask2
+    ]
+
+amdsmi_hsmp_enabled_commands_t = struct_amdsmi_hsmp_enabled_commands_t
+struct_amdsmi_hsmp_enabled_commands_t._fields_ = struct_amdsmi_hsmp_enabled_commands_t_fields_
+
 class struct_amdsmi_dimm_power_t(Structure):
     pass
 
@@ -2696,13 +2712,13 @@ amdsmi_get_supported_power_cap.restype = amdsmi_status_t
 amdsmi_get_supported_power_cap.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(amdsmi_power_cap_type_t)]
 amdsmi_get_cpu_socket_power = _libraries['libamd_smi.so'].amdsmi_get_cpu_socket_power
 amdsmi_get_cpu_socket_power.restype = amdsmi_status_t
-amdsmi_get_cpu_socket_power.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_socket_power.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_double)]
 amdsmi_get_cpu_socket_power_cap = _libraries['libamd_smi.so'].amdsmi_get_cpu_socket_power_cap
 amdsmi_get_cpu_socket_power_cap.restype = amdsmi_status_t
-amdsmi_get_cpu_socket_power_cap.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_socket_power_cap.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_double)]
 amdsmi_get_cpu_socket_power_cap_max = _libraries['libamd_smi.so'].amdsmi_get_cpu_socket_power_cap_max
 amdsmi_get_cpu_socket_power_cap_max.restype = amdsmi_status_t
-amdsmi_get_cpu_socket_power_cap_max.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_socket_power_cap_max.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_double)]
 amdsmi_get_cpu_pwr_svi_telemetry_all_rails = _libraries['libamd_smi.so'].amdsmi_get_cpu_pwr_svi_telemetry_all_rails
 amdsmi_get_cpu_pwr_svi_telemetry_all_rails.restype = amdsmi_status_t
 amdsmi_get_cpu_pwr_svi_telemetry_all_rails.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
@@ -2712,7 +2728,10 @@ amdsmi_set_cpu_socket_power_cap.argtypes = [amdsmi_processor_handle, uint32_t]
 uint8_t = ctypes.c_uint8
 amdsmi_set_cpu_pwr_efficiency_mode = _libraries['libamd_smi.so'].amdsmi_set_cpu_pwr_efficiency_mode
 amdsmi_set_cpu_pwr_efficiency_mode.restype = amdsmi_status_t
-amdsmi_set_cpu_pwr_efficiency_mode.argtypes = [amdsmi_processor_handle, uint8_t]
+amdsmi_set_cpu_pwr_efficiency_mode.argtypes = [amdsmi_processor_handle, uint8_t, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_pwr_efficiency_mode = _libraries['libamd_smi.so'].amdsmi_get_cpu_pwr_efficiency_mode
+amdsmi_get_cpu_pwr_efficiency_mode.restype = amdsmi_status_t
+amdsmi_get_cpu_pwr_efficiency_mode.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_double)]
 amdsmi_get_gpu_memory_total = _libraries['libamd_smi.so'].amdsmi_get_gpu_memory_total
 amdsmi_get_gpu_memory_total.restype = amdsmi_status_t
 amdsmi_get_gpu_memory_total.argtypes = [amdsmi_processor_handle, amdsmi_memory_type_t, ctypes.POINTER(ctypes.c_uint64)]
@@ -3248,18 +3267,89 @@ amdsmi_get_cpu_cores_per_socket.argtypes = [uint32_t, ctypes.POINTER(struct_amds
 amdsmi_get_cpu_socket_count = _libraries['libamd_smi.so'].amdsmi_get_cpu_socket_count
 amdsmi_get_cpu_socket_count.restype = amdsmi_status_t
 amdsmi_get_cpu_socket_count.argtypes = [ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_set_cpu_xgmi_pstate_range = _libraries['libamd_smi.so'].amdsmi_set_cpu_xgmi_pstate_range
+amdsmi_set_cpu_xgmi_pstate_range.restype = amdsmi_status_t
+amdsmi_set_cpu_xgmi_pstate_range.argtypes = [amdsmi_processor_handle, uint8_t, uint8_t]
+amdsmi_get_cpu_xgmi_pstate_range = _libraries['libamd_smi.so'].amdsmi_get_cpu_xgmi_pstate_range
+amdsmi_get_cpu_xgmi_pstate_range.restype = amdsmi_status_t
+amdsmi_get_cpu_xgmi_pstate_range.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8)]
 amdsmi_set_cpu_rail_isofreq_policy = _libraries['libamd_smi.so'].amdsmi_set_cpu_rail_isofreq_policy
 amdsmi_set_cpu_rail_isofreq_policy.restype = amdsmi_status_t
-amdsmi_set_cpu_rail_isofreq_policy.argtypes = [amdsmi_processor_handle, uint8_t]
+amdsmi_set_cpu_rail_isofreq_policy.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_bool)]
 amdsmi_get_cpu_rail_isofreq_policy = _libraries['libamd_smi.so'].amdsmi_get_cpu_rail_isofreq_policy
 amdsmi_get_cpu_rail_isofreq_policy.restype = amdsmi_status_t
 amdsmi_get_cpu_rail_isofreq_policy.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
-amdsmi_set_dfc_ctrl = _libraries['libamd_smi.so'].amdsmi_set_dfc_ctrl
-amdsmi_set_dfc_ctrl.restype = amdsmi_status_t
-amdsmi_set_dfc_ctrl.argtypes = [amdsmi_processor_handle, ctypes.c_bool]
-amdsmi_get_dfc_ctrl = _libraries['libamd_smi.so'].amdsmi_get_dfc_ctrl
-amdsmi_get_dfc_ctrl.restype = amdsmi_status_t
-amdsmi_get_dfc_ctrl.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
+amdsmi_set_cpu_dfc_ctrl = _libraries['libamd_smi.so'].amdsmi_set_cpu_dfc_ctrl
+amdsmi_set_cpu_dfc_ctrl.restype = amdsmi_status_t
+amdsmi_set_cpu_dfc_ctrl.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
+amdsmi_get_cpu_dfc_ctrl = _libraries['libamd_smi.so'].amdsmi_get_cpu_dfc_ctrl
+amdsmi_get_cpu_dfc_ctrl.restype = amdsmi_status_t
+amdsmi_get_cpu_dfc_ctrl.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
+amdsmi_set_cpu_pc6_enable = _libraries['libamd_smi.so'].amdsmi_set_cpu_pc6_enable
+amdsmi_set_cpu_pc6_enable.restype = amdsmi_status_t
+amdsmi_set_cpu_pc6_enable.argtypes = [amdsmi_processor_handle, ctypes.c_uint8]
+amdsmi_get_cpu_pc6_enable = _libraries['libamd_smi.so'].amdsmi_get_cpu_pc6_enable
+amdsmi_get_cpu_pc6_enable.restype = amdsmi_status_t
+amdsmi_get_cpu_pc6_enable.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
+amdsmi_set_cpu_cc6_enable = _libraries['libamd_smi.so'].amdsmi_set_cpu_cc6_enable
+amdsmi_set_cpu_cc6_enable.restype = amdsmi_status_t
+amdsmi_set_cpu_cc6_enable.argtypes = [amdsmi_processor_handle, ctypes.c_uint8]
+amdsmi_get_cpu_cc6_enable = _libraries['libamd_smi.so'].amdsmi_get_cpu_cc6_enable
+amdsmi_get_cpu_cc6_enable.restype = amdsmi_status_t
+amdsmi_get_cpu_cc6_enable.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
+amdsmi_get_cpu_dimm_sb_reg = _libraries['libamd_smi.so'].amdsmi_get_cpu_dimm_sb_reg
+amdsmi_get_cpu_dimm_sb_reg.restype = amdsmi_status_t
+amdsmi_get_cpu_dimm_sb_reg.argtypes = [amdsmi_processor_handle, uint64_t, uint64_t, uint64_t, uint64_t, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_set_cpu_dimm_sb_reg = _libraries['libamd_smi.so'].amdsmi_set_cpu_dimm_sb_reg
+amdsmi_set_cpu_dimm_sb_reg.restype = amdsmi_status_t
+amdsmi_set_cpu_dimm_sb_reg.argtypes = [amdsmi_processor_handle, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t]
+amdsmi_get_cpu_core_ccd_power = _libraries['libamd_smi.so'].amdsmi_get_cpu_core_ccd_power
+amdsmi_get_cpu_core_ccd_power.restype = amdsmi_status_t
+amdsmi_get_cpu_core_ccd_power.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_double)]
+amdsmi_get_cpu_tdelta = _libraries['libamd_smi.so'].amdsmi_get_cpu_tdelta
+amdsmi_get_cpu_tdelta.restype = amdsmi_status_t
+amdsmi_get_cpu_tdelta.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
+amdsmi_get_cpu_svi3_vr_controller_temp = _libraries['libamd_smi.so'].amdsmi_get_cpu_svi3_vr_controller_temp
+amdsmi_get_cpu_svi3_vr_controller_temp.restype = amdsmi_status_t
+amdsmi_get_cpu_svi3_vr_controller_temp.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_enabled_commands = _libraries['libamd_smi.so'].amdsmi_get_cpu_enabled_commands
+amdsmi_get_cpu_enabled_commands.restype = amdsmi_status_t
+amdsmi_get_cpu_enabled_commands.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_bool), ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_core_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_get_cpu_core_floor_freq_limit
+amdsmi_get_cpu_core_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_get_cpu_core_floor_freq_limit.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_get_cpu_floor_freq_limit
+amdsmi_get_cpu_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_get_cpu_floor_freq_limit.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_core_eff_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_get_cpu_core_eff_floor_freq_limit
+amdsmi_get_cpu_core_eff_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_get_cpu_core_eff_floor_freq_limit.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_get_cpu_eff_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_get_cpu_eff_floor_freq_limit
+amdsmi_get_cpu_eff_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_get_cpu_eff_floor_freq_limit.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_set_cpu_core_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_set_cpu_core_floor_freq_limit
+amdsmi_set_cpu_core_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_set_cpu_core_floor_freq_limit.argtypes = [amdsmi_processor_handle, uint32_t]
+amdsmi_set_cpu_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_set_cpu_floor_freq_limit
+amdsmi_set_cpu_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_set_cpu_floor_freq_limit.argtypes = [amdsmi_processor_handle, uint32_t]
+amdsmi_set_cpu_core_msr_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_set_cpu_core_msr_floor_freq_limit
+amdsmi_set_cpu_core_msr_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_set_cpu_core_msr_floor_freq_limit.argtypes = [amdsmi_processor_handle, uint32_t]
+amdsmi_set_cpu_msr_floor_freq_limit = _libraries['libamd_smi.so'].amdsmi_set_cpu_msr_floor_freq_limit
+amdsmi_set_cpu_msr_floor_freq_limit.restype = amdsmi_status_t
+amdsmi_set_cpu_msr_floor_freq_limit.argtypes = [amdsmi_processor_handle, uint32_t]
+amdsmi_get_cpu_freq_range = _libraries['libamd_smi.so'].amdsmi_get_cpu_freq_range
+amdsmi_get_cpu_freq_range.restype = amdsmi_status_t
+amdsmi_get_cpu_freq_range.argtypes = [ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32)]
+amdsmi_set_cpu_sdps_limit = _libraries['libamd_smi.so'].amdsmi_set_cpu_sdps_limit
+amdsmi_set_cpu_sdps_limit.restype = amdsmi_status_t
+amdsmi_set_cpu_sdps_limit.argtypes = [amdsmi_processor_handle, uint32_t]
+amdsmi_get_cpu_sdps_limit = _libraries['libamd_smi.so'].amdsmi_get_cpu_sdps_limit
+amdsmi_get_cpu_sdps_limit.restype = amdsmi_status_t
+amdsmi_get_cpu_sdps_limit.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_double)]
+
+
 __all__ = \
     ['AGG_BW0', 'AMDSMI_ACCELERATOR_DECODER',
     'AMDSMI_ACCELERATOR_DMA', 'AMDSMI_ACCELERATOR_ENCODER',
@@ -3598,8 +3688,20 @@ __all__ = \
     'amdsmi_get_cpu_socket_power_cap_max',
     'amdsmi_get_cpu_socket_temperature', 'amdsmi_get_cpucore_handles',
     'amdsmi_get_energy_count', 'amdsmi_get_esmi_err_msg',
-    'amdsmi_get_fw_info', 'amdsmi_get_dfc_ctrl', 'amdsmi_set_dfc_ctrl',
-    'amdsmi_get_cpu_rail_isofreq_policy', 'amdsmi_set_cpu_rail_isofreq_policy',
+    'amdsmi_get_fw_info',
+    'amdsmi_set_cpu_xgmi_pstate_range', 'amdsmi_get_cpu_xgmi_pstate_range',
+    'amdsmi_set_cpu_rail_isofreq_policy', 'amdsmi_get_cpu_rail_isofreq_policy',
+    'amdsmi_set_cpu_dfc_ctrl', 'amdsmi_get_cpu_dfc_ctrl',
+    'amdsmi_set_cpu_pc6_enable', 'amdsmi_get_cpu_pc6_enable',
+    'amdsmi_set_cpu_cc6_enable', 'amdsmi_get_cpu_cc6_enable',
+    'amdsmi_get_cpu_dimm_sb_reg', 'amdsmi_set_cpu_dimm_sb_reg',
+    'amdsmi_get_cpu_core_ccd_power', 'amdsmi_get_cpu_tdelta',
+    'amdsmi_get_cpu_svi3_vr_controller_temp', 'amdsmi_get_cpu_enabled_commands',
+    'amdsmi_get_cpu_core_floor_freq_limit', 'amdsmi_get_cpu_floor_freq_limit',
+    'amdsmi_get_cpu_core_eff_floor_freq_limit', 'amdsmi_get_cpu_eff_floor_freq_limit',
+    'amdsmi_set_cpu_core_floor_freq_limit', 'amdsmi_set_cpu_floor_freq_limit',
+    'amdsmi_set_cpu_core_msr_floor_freq_limit','amdsmi_set_cpu_msr_floor_freq_limit',
+    'amdsmi_set_cpu_sdps_limit', 'amdsmi_get_cpu_sdps_limit',
     'amdsmi_get_gpu_accelerator_partition_profile',
     'amdsmi_get_gpu_accelerator_partition_profile_config',
     'amdsmi_get_gpu_activity', 'amdsmi_get_gpu_asic_info',
@@ -3705,6 +3807,7 @@ __all__ = \
     'amdsmi_set_cpu_gmi3_link_width_range',
     'amdsmi_set_cpu_pcie_link_rate',
     'amdsmi_set_cpu_pwr_efficiency_mode',
+    'amdsmi_get_cpu_pwr_efficiency_mode',
     'amdsmi_set_cpu_socket_boostlimit',
     'amdsmi_set_cpu_socket_lclk_dpm_level',
     'amdsmi_set_cpu_socket_power_cap', 'amdsmi_set_cpu_xgmi_width',
@@ -3758,7 +3861,7 @@ __all__ = \
     'struct_amdsmi_gpu_ras_policy_info_t',
     'struct_amdsmi_gpu_ras_policy_v4_0_t',
     'struct_amdsmi_gpu_xcp_metrics_t',
-    'struct_amdsmi_hsmp_driver_version_t',
+    'struct_amdsmi_hsmp_driver_version_t', 
     'struct_amdsmi_hsmp_metrics_table_t', 'struct_amdsmi_kfd_info_t',
     'struct_amdsmi_link_id_bw_type_t', 'struct_amdsmi_link_metrics_t',
     'struct_amdsmi_memory_partition_config_t',
