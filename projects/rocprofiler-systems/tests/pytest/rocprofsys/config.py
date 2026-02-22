@@ -193,7 +193,7 @@ class RocprofsysConfig:
             "ROCPROFSYS_TIME_OUTPUT": "OFF",
             "ROCPROFSYS_FILE_OUTPUT": "ON",
             "ROCPROFSYS_USE_PID": "OFF",
-            "ROCPROFSYS_VERBOSE": "1",
+            "ROCPROFSYS_LOG_LEVEL": "info",
             "ROCPROFSYS_SAMPLING_FREQ": "300",
             "ROCPROFSYS_SAMPLING_DELAY": "0.05",
             "OMP_PROC_BIND": "spread",

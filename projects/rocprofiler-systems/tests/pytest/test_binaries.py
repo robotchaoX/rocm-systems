@@ -589,7 +589,7 @@ class TestAvailBinary:
     ):
         pass_regex = [
             r"ROCPROFSYS_CONFIG_FILE[\s\S]*ROCPROFSYS_ENABLED[\s\S]*"
-            r"ROCPROFSYS_SUPPRESS_CONFIG[\s\S]*ROCPROFSYS_SUPPRESS_PARSING[\s\S]*ROCPROFSYS_VERBOSE"
+            r"ROCPROFSYS_SUPPRESS_CONFIG[\s\S]*ROCPROFSYS_SUPPRESS_PARSING[\s\S]*ROCPROFSYS_LOG_LEVEL"
         ]
 
         result = run_test(
