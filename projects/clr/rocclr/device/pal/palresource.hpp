@@ -632,7 +632,7 @@ class ResourceCache : public amd::HeapObject {
   //! Removes one last entry from the cache
   void removeLast();
 
-  amd::RecursiveMonitor lockCacheOps_;  //!< Lock to serialise cache access
+  std::recursive_mutex lockCacheOps_;  //!< Lock to serialise cache access
 
   size_t cacheSize_;             //!< Current cache size in bytes
   size_t lclCacheSize_;          //!< Local memory stored in the cache

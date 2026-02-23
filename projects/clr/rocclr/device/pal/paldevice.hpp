@@ -251,7 +251,7 @@ class Device : public NullDevice {
     int counter_;                    //!< Lock usage counter
     Pal::EngineType engineType_;     //!< Engine type
     uint32_t index_;                 //!< HW queue index for scratch buffer access
-    amd::RecursiveMonitor queue_lock_;        //!< Queue lock for access
+    std::recursive_mutex queue_lock_;  //!< Queue lock for access
     AqlPacketMgmt aql_packet_mgmt_;  //!< AQL packets management class for debugger support
     QueueRecycleInfo(const Device& dev)
         : counter_(1),
@@ -751,9 +751,9 @@ class Device : public NullDevice {
   //! Lock to serialise all async ops on initialization heap operation
   mutable amd::Monitor lockForInitHeap_;
   mutable amd::Monitor lockPAL_;          //!< Lock to serialise PAL access
-  mutable amd::RecursiveMonitor vgpusAccess_;      //!< Lock to serialise virtual gpu list access
+  mutable std::recursive_mutex vgpusAccess_;  //!< Lock to serialise virtual gpu list access
   mutable amd::Monitor scratchAlloc_;     //!< Lock to serialise scratch allocation
-  mutable amd::RecursiveMonitor mapCacheOps_;      //!< Lock to serialise cache for the map resources
+  mutable std::recursive_mutex mapCacheOps_;  //!< Lock to serialise cache for the map resources
   mutable amd::Monitor lockResourceOps_;  //!< Lock to serialise resource access
   mutable std::mutex lockAllowAccess_;    //!< To serialize allow_access calls
   XferBuffers* xferRead_;                 //!< Transfer buffers read

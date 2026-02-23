@@ -44,11 +44,11 @@ struct UniqueFD {
 namespace hip {
 class PlatformState {
   // Guards PlatformState globals
-  amd::RecursiveMonitor lock_;
+  std::recursive_mutex lock_;
 
   // global level lock for unique file descritor map: ufd_map_
   // Unique FD Store Lock
-  amd::RecursiveMonitor ufd_lock_;
+  std::recursive_mutex ufd_lock_;
 
   // Lock for logging operations
   amd::Monitor lg_lock_;
@@ -127,7 +127,7 @@ class PlatformState {
   friend hipError_t hipExtSetLoggingParams(size_t log_level, size_t log_size, size_t log_mask);
 
   inline bool RegisterLibraryFunction(const hipKernel_t f, const hipLibrary_t l) {
-    amd::ScopedLock lock(lock_);
+    std::scoped_lock lock(lock_);
     if (library_functions_.find(f) == library_functions_.end()) {
       library_functions_.insert(std::make_pair(f, l));
       return true;
@@ -135,7 +135,7 @@ class PlatformState {
     return false;
   }
   inline bool UnregisterLibraryFunction(const hipKernel_t f) {
-    amd::ScopedLock lock(lock_);
+    std::scoped_lock lock(lock_);
     if (library_functions_.find(f) != library_functions_.end()) {
       library_functions_.erase(f);
       return true;
@@ -144,7 +144,7 @@ class PlatformState {
   }
 
   inline bool GetFunctionLibrary(const hipKernel_t f, hipLibrary_t* lib) {
-    amd::ScopedLock lock(lock_);
+    std::scoped_lock lock(lock_);
     if (library_functions_.find(f) != library_functions_.end()) {
       *lib = library_functions_[f];
       return true;

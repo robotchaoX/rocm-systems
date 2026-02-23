@@ -820,7 +820,7 @@ extern "C"
 }
 
 void PlatformState::init() {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
   if (initialized_ || g_devices.empty()) {
     return;
   }
@@ -856,7 +856,7 @@ hipError_t PlatformState::loadModule(hipModule_t* module, const char* fname, con
   *module = dynCo->getModule();
   assert(*module != nullptr);
 
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
   if (dynCO_map_.find(*module) != dynCO_map_.end()) {
     delete dynCo;
     return hipErrorAlreadyMapped;
@@ -867,7 +867,7 @@ hipError_t PlatformState::loadModule(hipModule_t* module, const char* fname, con
 }
 
 hipError_t PlatformState::unloadModule(hipModule_t hmod) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
 
   auto it = dynCO_map_.find(hmod);
   if (it == dynCO_map_.end()) {
@@ -891,7 +891,7 @@ hipError_t PlatformState::unloadModule(hipModule_t hmod) {
 
 hipError_t PlatformState::getDynFunc(hipFunction_t* hfunc, hipModule_t hmod,
                                      const char* func_name) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
 
   auto it = dynCO_map_.find(hmod);
   if (it == dynCO_map_.end()) {
@@ -906,7 +906,7 @@ hipError_t PlatformState::getDynFunc(hipFunction_t* hfunc, hipModule_t hmod,
 }
 
 hipError_t PlatformState::getFuncCount(unsigned int* count, hipModule_t hmod) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
 
   auto it = dynCO_map_.find(hmod);
   if (it == dynCO_map_.end()) {
@@ -917,14 +917,14 @@ hipError_t PlatformState::getFuncCount(unsigned int* count, hipModule_t hmod) {
 }
 
 bool PlatformState::isValidDynFunc(const void* hfunc) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
   return std::any_of(dynCO_map_.begin(), dynCO_map_.end(),
                      [&](auto& it) { return it.second->isValidDynFunc(hfunc); });
 }
 
 hipError_t PlatformState::getDynGlobalVar(const char* hostVar, hipModule_t hmod,
                                           hipDeviceptr_t* dev_ptr, size_t* size_ptr) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
 
   if (hostVar == nullptr) {
     return hipErrorInvalidValue;
@@ -955,14 +955,14 @@ hipError_t PlatformState::getDynGlobalVar(const char* hostVar, hipModule_t hmod,
 
 hipError_t PlatformState::registerTexRef(textureReference* texRef, hipModule_t hmod,
                                          std::string name) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
   texRef_map_.insert(std::make_pair(texRef, std::make_pair(hmod, name)));
   return hipSuccess;
 }
 
 hipError_t PlatformState::getDynTexGlobalVar(textureReference* texRef, hipDeviceptr_t* dev_ptr,
                                              size_t* size_ptr) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
 
   auto tex_it = texRef_map_.find(texRef);
   if (tex_it == texRef_map_.end()) {
@@ -986,7 +986,7 @@ hipError_t PlatformState::getDynTexGlobalVar(textureReference* texRef, hipDevice
 
 hipError_t PlatformState::getDynTexRef(const char* hostVar, hipModule_t hmod,
                                        textureReference** texRef) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
 
   auto it = dynCO_map_.find(hmod);
   if (it == dynCO_map_.end()) {
@@ -1085,7 +1085,7 @@ void PlatformState::popExec(ihipExec_t& exec) {
 }
 
 std::shared_ptr<UniqueFD> PlatformState::GetUniqueFileHandle(const std::string& file_path) {
-  amd::ScopedLock lock(ufd_lock_);
+  std::scoped_lock lock(ufd_lock_);
 
   if (ufd_map_.cend() == ufd_map_.find(file_path)) {
     // Get the file desc and file size from amd::Os API
@@ -1102,7 +1102,7 @@ std::shared_ptr<UniqueFD> PlatformState::GetUniqueFileHandle(const std::string& 
 }
 
 bool PlatformState::CloseUniqueFileHandle(const std::shared_ptr<UniqueFD>& ufd) {
-  amd::ScopedLock lock(ufd_lock_);
+  std::scoped_lock lock(ufd_lock_);
 
   // if use_count is 2, then there is 1 entry in the map and the current entry is the last close.
   if (ufd.use_count() == 2) {
@@ -1115,7 +1115,7 @@ bool PlatformState::CloseUniqueFileHandle(const std::shared_ptr<UniqueFD>& ufd) 
 }
 
 void* PlatformState::getDynamicLibraryHandle() {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
 
   if (dynamicLibraryHandle_ != nullptr) {
     return dynamicLibraryHandle_;
@@ -1133,7 +1133,7 @@ void* PlatformState::getDynamicLibraryHandle() {
 }
 
 void PlatformState::setDynamicLibraryHandle(void* handle) {
-  amd::ScopedLock lock(lock_);
+  std::scoped_lock lock(lock_);
   dynamicLibraryHandle_ = handle;
 }
 

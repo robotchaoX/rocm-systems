@@ -694,7 +694,7 @@ Memory& Device::XferBuffers::acquire() {
   size_t listSize;
 
   // Lock the operations with the staged buffer list
-  amd::ScopedLock l(lock_);
+  std::scoped_lock l(lock_);
   listSize = freeBuffers_.size();
 
   // If the list is empty, then attempt to allocate a staged buffer
@@ -730,7 +730,7 @@ void Device::XferBuffers::release(VirtualGPU& gpu, Memory& buffer) {
   // the next aquire can come from different queue
   buffer.wait(gpu);
   // Lock the operations with the staged buffer list
-  amd::ScopedLock l(lock_);
+  std::scoped_lock l(lock_);
   freeBuffers_.push_back(&buffer);
   --acquiredCnt_;
 }
@@ -2082,7 +2082,7 @@ bool Device::amdFileWrite(amd::Os::FileDesc handle, void* devicePtr, uint64_t si
 
 amd::Memory* Device::findMapTarget(size_t size) const {
   // Must be serialised for access
-  amd::ScopedLock lk(mapCacheOps_);
+  std::scoped_lock lk(mapCacheOps_);
 
   amd::Memory* map = nullptr;
   size_t minSize = 0;
@@ -2137,7 +2137,7 @@ amd::Memory* Device::findMapTarget(size_t size) const {
 
 bool Device::addMapTarget(amd::Memory* memory) const {
   // Must be serialised for access
-  amd::ScopedLock lk(mapCacheOps_);
+  std::scoped_lock lk(mapCacheOps_);
 
   // the svm memory shouldn't be cached
   if (!memory->canBeCached()) {

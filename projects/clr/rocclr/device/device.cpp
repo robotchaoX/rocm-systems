@@ -346,7 +346,7 @@ AppProfile Device::appProfile_;
 
 Context* Device::glb_ctx_ = nullptr;
 // P2P Staging Lock
-RecursiveMonitor Device::p2p_stage_ops_;
+std::recursive_mutex Device::p2p_stage_ops_;
 Memory* Device::p2p_stage_ = nullptr;
 
 cl_int Device::gpu_error_ = CL_SUCCESS;
@@ -820,7 +820,7 @@ bool Device::create(const Isa& isa) {
   assert(!vaCacheAccess_ && !vaCacheMap_);
   isa_ = &isa;
   // VA Cache Ops Lock
-  vaCacheAccess_ = new amd::RecursiveMonitor();
+  vaCacheAccess_ = new std::recursive_mutex();
   if (nullptr == vaCacheAccess_) {
     return false;
   }
@@ -864,7 +864,7 @@ void Device::addVACache(device::Memory* memory) const {
   // Make sure system memory has direct access
   if (memory->isHostMemDirectAccess()) {
     // VA cache access must be serialised
-    amd::ScopedLock lk(*vaCacheAccess_);
+    std::scoped_lock lk(*vaCacheAccess_);
     void* start = memory->owner()->getHostMem();
     size_t offset;
     device::Memory* doubleMap = findMemoryFromVA(start, &offset);
@@ -883,7 +883,7 @@ void Device::removeVACache(const device::Memory* memory) const {
   // Make sure system memory has direct access
   if (memory->isHostMemDirectAccess() && memory->owner()) {
     // VA cache access must be serialised
-    amd::ScopedLock lk(*vaCacheAccess_);
+    std::scoped_lock lk(*vaCacheAccess_);
     void* start = memory->owner()->getHostMem();
     vaCacheMap_->erase(reinterpret_cast<uintptr_t>(start));
   }
@@ -891,7 +891,7 @@ void Device::removeVACache(const device::Memory* memory) const {
 
 device::Memory* Device::findMemoryFromVA(const void* ptr, size_t* offset) const {
   // VA cache access must be serialised
-  amd::ScopedLock lk(*vaCacheAccess_);
+  std::scoped_lock lk(*vaCacheAccess_);
 
   uintptr_t key = reinterpret_cast<uintptr_t>(ptr);
   auto it = vaCacheMap_->upper_bound(reinterpret_cast<uintptr_t>(ptr));
@@ -1254,7 +1254,7 @@ void Memory::saveMapInfo(const void* mapAddress, const amd::Coord3D origin,
                          const amd::Coord3D region, uint mapFlags, bool entire,
                          amd::Image* baseMip) {
   // Map/Unmap must be serialized.
-  amd::ScopedLock lock(owner()->lockMemoryOps());
+  std::scoped_lock lock(owner()->lockMemoryOps());
 
   WriteMapInfo info = {};
   WriteMapInfo* pInfo = &info;
