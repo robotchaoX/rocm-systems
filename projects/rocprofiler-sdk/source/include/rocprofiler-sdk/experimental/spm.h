@@ -163,7 +163,7 @@ typedef void (*rocprofiler_spm_dispatch_counting_record_cb_t)(
     const rocprofiler_spm_counter_record_t**                records,
     size_t                                                  record_count,
     int                                                     flags,
-    rocprofiler_user_data_t*                                userdata,
+    rocprofiler_user_data_t                                 userdata,
     void*                                                   record_callback_args);
 /**
  * @brief (experimental) Callback query if dispatch should be profiled

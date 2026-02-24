@@ -269,10 +269,10 @@ configure_callback_spm_dispatch(rocprofiler_context_id_t                       c
  * Enabled flag is used to check if context has already been enabled
  */
 
-void
+rocprofiler_status_t
 start_context(const context::context* ctx)
 {
-    if(!ctx || !ctx->dispatch_spm) return;
+    if(!ctx || !ctx->dispatch_spm) return ROCPROFILER_STATUS_ERROR;
 
     auto* controller = hsa::get_queue_controller();
 
@@ -321,6 +321,8 @@ start_context(const context::context* ctx)
             });
         }
     }
+    
+    return ROCPROFILER_STATUS_SUCCESS;
 }
 
 /** @brief stop SPM dispatch context
@@ -339,12 +341,7 @@ stop_context(const context::context* ctx)
         if(!enabled) return;
         enabled  = false;
     });
-    for(auto& cb : ctx->dispatch_spm->callbacks)
-    {
-        if(!cb->queue_id) continue;
-        // Remove our callbacks from HSA's queue controller
-           controller->remove_callback(cb->queue_id);
-    }
+    
     if(controller) controller->disable_serialization();
 }
 
