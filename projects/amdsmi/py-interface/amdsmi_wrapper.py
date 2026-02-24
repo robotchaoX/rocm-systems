@@ -990,21 +990,6 @@ amdsmi_card_form_factor_t = ctypes.c_uint32 # enum
 class struct_amdsmi_pcie_info_t(Structure):
     pass
 
-class struct_pcie_static_(Structure):
-    pass
-
-struct_pcie_static_._pack_ = 1 # source:False
-struct_pcie_static_._fields_ = [
-    ('max_pcie_width', ctypes.c_uint16),
-    ('PADDING_0', ctypes.c_ubyte * 2),
-    ('max_pcie_speed', ctypes.c_uint32),
-    ('pcie_interface_version', ctypes.c_uint32),
-    ('slot_type', amdsmi_card_form_factor_t),
-    ('max_pcie_interface_version', ctypes.c_uint32),
-    ('PADDING_1', ctypes.c_ubyte * 4),
-    ('reserved', ctypes.c_uint64 * 9),
-]
-
 class struct_pcie_metric_(Structure):
     pass
 
@@ -1023,6 +1008,21 @@ struct_pcie_metric_._fields_ = [
     ('pcie_lc_perf_other_end_recovery_count', ctypes.c_uint32),
     ('PADDING_2', ctypes.c_ubyte * 4),
     ('reserved', ctypes.c_uint64 * 12),
+]
+
+class struct_pcie_static_(Structure):
+    pass
+
+struct_pcie_static_._pack_ = 1 # source:False
+struct_pcie_static_._fields_ = [
+    ('max_pcie_width', ctypes.c_uint16),
+    ('PADDING_0', ctypes.c_ubyte * 2),
+    ('max_pcie_speed', ctypes.c_uint32),
+    ('pcie_interface_version', ctypes.c_uint32),
+    ('slot_type', amdsmi_card_form_factor_t),
+    ('max_pcie_interface_version', ctypes.c_uint32),
+    ('PADDING_1', ctypes.c_ubyte * 4),
+    ('reserved', ctypes.c_uint64 * 9),
 ]
 
 struct_amdsmi_pcie_info_t._pack_ = 1 # source:False
@@ -1451,7 +1451,8 @@ struct_amdsmi_proc_info_t._fields_ = [
     ('container_name', ctypes.c_char * 256),
     ('cu_occupancy', ctypes.c_uint32),
     ('evicted_time', ctypes.c_uint32),
-    ('reserved', ctypes.c_uint32 * 10),
+    ('sdma_usage', ctypes.c_uint64),
+    ('reserved', ctypes.c_uint32 * 8),
 ]
 
 amdsmi_proc_info_t = struct_amdsmi_proc_info_t
@@ -2364,6 +2365,8 @@ amdsmi_ptl_data_format_t__enumvalues = {
     2: 'AMDSMI_PTL_DATA_FORMAT_BF16',
     3: 'AMDSMI_PTL_DATA_FORMAT_F32',
     4: 'AMDSMI_PTL_DATA_FORMAT_F64',
+    5: 'AMDSMI_PTL_DATA_FORMAT_F8',
+    6: 'AMDSMI_PTL_DATA_FORMAT_VECTOR',
     4294967295: 'AMDSMI_PTL_DATA_FORMAT_INVALID',
 }
 AMDSMI_PTL_DATA_FORMAT_I8 = 0
@@ -2371,6 +2374,8 @@ AMDSMI_PTL_DATA_FORMAT_F16 = 1
 AMDSMI_PTL_DATA_FORMAT_BF16 = 2
 AMDSMI_PTL_DATA_FORMAT_F32 = 3
 AMDSMI_PTL_DATA_FORMAT_F64 = 4
+AMDSMI_PTL_DATA_FORMAT_F8 = 5
+AMDSMI_PTL_DATA_FORMAT_VECTOR = 6
 AMDSMI_PTL_DATA_FORMAT_INVALID = 4294967295
 amdsmi_ptl_data_format_t = ctypes.c_uint32 # enum
 class struct_amdsmi_smu_fw_version_t(Structure):
@@ -3278,6 +3283,7 @@ amdsmi_set_cpu_rail_isofreq_policy.restype = amdsmi_status_t
 amdsmi_set_cpu_rail_isofreq_policy.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_bool)]
 amdsmi_get_cpu_rail_isofreq_policy = _libraries['libamd_smi.so'].amdsmi_get_cpu_rail_isofreq_policy
 amdsmi_get_cpu_rail_isofreq_policy.restype = amdsmi_status_t
+<<<<<<< SWDEV-573264-Patch1
 amdsmi_get_cpu_rail_isofreq_policy.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_uint8)]
 amdsmi_set_cpu_dfc_ctrl = _libraries['libamd_smi.so'].amdsmi_set_cpu_dfc_ctrl
 amdsmi_set_cpu_dfc_ctrl.restype = amdsmi_status_t
@@ -3350,6 +3356,15 @@ amdsmi_get_cpu_sdps_limit.restype = amdsmi_status_t
 amdsmi_get_cpu_sdps_limit.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_double)]
 
 
+=======
+amdsmi_get_cpu_rail_isofreq_policy.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_ubyte)]
+amdsmi_set_dfc_ctrl = _libraries['libamd_smi.so'].amdsmi_set_dfc_ctrl
+amdsmi_set_dfc_ctrl.restype = amdsmi_status_t
+amdsmi_set_dfc_ctrl.argtypes = [amdsmi_processor_handle, ctypes.c_bool]
+amdsmi_get_dfc_ctrl = _libraries['libamd_smi.so'].amdsmi_get_dfc_ctrl
+amdsmi_get_dfc_ctrl.restype = amdsmi_status_t
+amdsmi_get_dfc_ctrl.argtypes = [amdsmi_processor_handle, ctypes.POINTER(ctypes.c_ubyte)]
+>>>>>>> develop
 __all__ = \
     ['AGG_BW0', 'AMDSMI_ACCELERATOR_DECODER',
     'AMDSMI_ACCELERATOR_DMA', 'AMDSMI_ACCELERATOR_ENCODER',
@@ -3504,8 +3519,9 @@ __all__ = \
     'AMDSMI_PROCESSOR_TYPE_NON_AMD_GPU',
     'AMDSMI_PROCESSOR_TYPE_UNKNOWN', 'AMDSMI_PTL_DATA_FORMAT_BF16',
     'AMDSMI_PTL_DATA_FORMAT_F16', 'AMDSMI_PTL_DATA_FORMAT_F32',
-    'AMDSMI_PTL_DATA_FORMAT_F64', 'AMDSMI_PTL_DATA_FORMAT_I8',
-    'AMDSMI_PTL_DATA_FORMAT_INVALID',
+    'AMDSMI_PTL_DATA_FORMAT_F64', 'AMDSMI_PTL_DATA_FORMAT_F8',
+    'AMDSMI_PTL_DATA_FORMAT_I8', 'AMDSMI_PTL_DATA_FORMAT_INVALID',
+    'AMDSMI_PTL_DATA_FORMAT_VECTOR',
     'AMDSMI_PWR_PROF_PRST_3D_FULL_SCR_MASK',
     'AMDSMI_PWR_PROF_PRST_BOOTUP_DEFAULT',
     'AMDSMI_PWR_PROF_PRST_COMPUTE_MASK',
@@ -3677,6 +3693,7 @@ __all__ = \
     'amdsmi_get_cpu_hsmp_proto_ver', 'amdsmi_get_cpu_model',
     'amdsmi_get_cpu_model_name', 'amdsmi_get_cpu_prochot_status',
     'amdsmi_get_cpu_pwr_svi_telemetry_all_rails',
+    'amdsmi_get_cpu_rail_isofreq_policy',
     'amdsmi_get_cpu_smu_fw_version',
     'amdsmi_get_cpu_socket_c0_residency',
     'amdsmi_get_cpu_socket_count',
@@ -3687,8 +3704,10 @@ __all__ = \
     'amdsmi_get_cpu_socket_power', 'amdsmi_get_cpu_socket_power_cap',
     'amdsmi_get_cpu_socket_power_cap_max',
     'amdsmi_get_cpu_socket_temperature', 'amdsmi_get_cpucore_handles',
+    'amdsmi_get_cpusocket_handles', 'amdsmi_get_dfc_ctrl',
     'amdsmi_get_energy_count', 'amdsmi_get_esmi_err_msg',
     'amdsmi_get_fw_info',
+<<<<<<< SWDEV-573264-Patch1
     'amdsmi_set_cpu_xgmi_pstate_range', 'amdsmi_get_cpu_xgmi_pstate_range',
     'amdsmi_set_cpu_rail_isofreq_policy', 'amdsmi_get_cpu_rail_isofreq_policy',
     'amdsmi_set_cpu_dfc_ctrl', 'amdsmi_get_cpu_dfc_ctrl',
@@ -3702,6 +3721,8 @@ __all__ = \
     'amdsmi_set_cpu_core_floor_freq_limit', 'amdsmi_set_cpu_floor_freq_limit',
     'amdsmi_set_cpu_core_msr_floor_freq_limit','amdsmi_set_cpu_msr_floor_freq_limit',
     'amdsmi_set_cpu_sdps_limit', 'amdsmi_get_cpu_sdps_limit',
+=======
+>>>>>>> develop
     'amdsmi_get_gpu_accelerator_partition_profile',
     'amdsmi_get_gpu_accelerator_partition_profile_config',
     'amdsmi_get_gpu_activity', 'amdsmi_get_gpu_asic_info',
@@ -3807,10 +3828,15 @@ __all__ = \
     'amdsmi_set_cpu_gmi3_link_width_range',
     'amdsmi_set_cpu_pcie_link_rate',
     'amdsmi_set_cpu_pwr_efficiency_mode',
+<<<<<<< SWDEV-573264-Patch1
     'amdsmi_get_cpu_pwr_efficiency_mode',
+=======
+    'amdsmi_set_cpu_rail_isofreq_policy',
+>>>>>>> develop
     'amdsmi_set_cpu_socket_boostlimit',
     'amdsmi_set_cpu_socket_lclk_dpm_level',
     'amdsmi_set_cpu_socket_power_cap', 'amdsmi_set_cpu_xgmi_width',
+    'amdsmi_set_dfc_ctrl',
     'amdsmi_set_gpu_accelerator_partition_profile',
     'amdsmi_set_gpu_clk_limit', 'amdsmi_set_gpu_clk_range',
     'amdsmi_set_gpu_compute_partition',
