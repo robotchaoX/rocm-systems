@@ -42,7 +42,33 @@ int GDABackend::mlx5_dv_dl_init() {
     return ROCSHMEM_ERROR;
 
   DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, init_obj);
+  DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, devx_obj_create);
+  DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, devx_obj_modify);
+  DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, devx_obj_destroy);
+  DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, devx_alloc_uar);
+  DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, devx_free_uar);
+  DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, devx_umem_reg_ex);
+  DLSYM_HELPER(mlx5dv, mlx5dv_, mlx5dv_handle_, devx_umem_dereg);
   return ROCSHMEM_SUCCESS;
+}
+
+void GDABackend::mlx5_create_qps(int sq_length) {
+  struct ibv_qp_init_attr_ex attr;
+
+  memset(&attr, 0, sizeof(struct ibv_qp_init_attr_ex));
+  attr.cap.max_send_wr     = sq_length;
+  attr.cap.max_send_sge    = 1;
+  attr.cap.max_inline_data = inline_threshold;
+  attr.sq_sig_all          = 0;
+  attr.qp_type             = IBV_QPT_RC;
+
+  for (size_t i = 0; i < mlx5_qps.size(); i++) {
+    attr.send_cq = cqs[i];
+    attr.recv_cq = cqs[i];
+
+    int err = mlx5_qps[i].create(mlx5dv, context, &attr);
+    CHECK_ZERO(err, "mlx5_devx_qp::create");
+  }
 }
 
 void GDABackend::mlx5_initialize_gpu_qp(QueuePair* gpu_qp, int conn_num) {
@@ -70,52 +96,44 @@ void GDABackend::mlx5_initialize_gpu_qp(QueuePair* gpu_qp, int conn_num) {
   gpu_qp->cq_log_cnt = log2(cq_out.cqe_cnt);
   gpu_qp->cq_dbrec = cq_out.dbrec;
 
-  mlx5dv_qp qp_out;
-  mlx_obj.qp.in = qps[conn_num];
-  mlx_obj.qp.out = &qp_out;
-  mlx5dv.init_obj(&mlx_obj, MLX5DV_OBJ_QP);
-  dump_mlx5dv_qp(&qp_out, conn_num);
+  mlx5_devx_qp& qp = mlx5_qps[conn_num];
+  qp.dump(conn_num);
 
   /*
-   * struct mlx5dv_qp {
-   *   __be32 *dbrec;
-   *   struct {
-   *     void *buf;
-   *     uint32_t wqe_cnt;
-   *     uint32_t stride;
-   *   } sq;
-   *   struct {
-   *     void *buf;
-   *     uint32_t wqe_cnt;
-   *     uint32_t stride;
-   *   } rq;
-   *   struct {
-   *     void *reg;
-   *     uint32_t size;
-   *   } bf;
+   * struct mlx5_devx_qp {
+   *   ibv_context       *ctx;
+   *   mlx5dv_devx_obj   *devx_obj;
+   *   mlx5dv_devx_uar   *uar;
+   *   mlx5dv_devx_umem* umem;
+   *   void*             sq;
+   *   uint32_t          *dbrec;
+   *   uint32_t          qpn;
+   *   uint16_t          sq_depth;
+   * };
+   *
+   * struct mlx5dv_devx_uar {
+   *   void     *reg_addr;
+   *   void     *base_addr;
+   *   uint32_t page_id;
+   *   off_t    mmap_off;
    *   uint64_t comp_mask;
-   *   off_t uar_mmap_offset;
-   *   uint32_t tirn;
-   *   uint32_t tisn;
-   *   uint32_t rqn;
-   *   uint32_t sqn;
-   *   uint64_t tir_icm_addr;
    * };
    */
 
-  gpu_qp->dbrec = &qp_out.dbrec[1]; // points to two pointers: 0 -> MLX5_REC_DBR, 1 -> MLX5_SND_DBR
-  gpu_qp->sq_buf = reinterpret_cast<uint64_t*>(qp_out.sq.buf);
-  gpu_qp->sq_wqe_cnt = qp_out.sq.wqe_cnt;
+  gpu_qp->dbrec = &qp.dbrec[MLX5_SND_DBR]; // points to two pointers: 0 -> MLX5_REC_DBR, 1 -> MLX5_SND_DBR
+  gpu_qp->sq_buf = reinterpret_cast<uint64_t*>(qp.sq);
+  gpu_qp->sq_wqe_cnt = qp.sq_depth;
   gpu_qp->rkey = htobe32(heap_rkey[conn_num % num_pes]);
   gpu_qp->lkey = htobe32(heap_mr->lkey);
-  gpu_qp->qp_num = qps[conn_num]->qp_num;
+  gpu_qp->qp_num = qp.qpn;
   gpu_qp->inline_threshold = inline_threshold;
-  // The 2 in qp_out.bf.size * 2 below facilitates the switching between blue flame registers
+  // The 2 in MLX5_DB_BLUEFLAME_BUFFER_SIZE * 2 below facilitates the switching between blue flame registers
 
   int hip_dev_id{-1};
   CHECK_HIP(hipGetDevice(&hip_dev_id));
   void* gpu_ptr{nullptr};
-  rocm_memory_lock_to_fine_grain(qp_out.bf.reg, qp_out.bf.size * 2, &gpu_ptr, hip_dev_id);
+  rocm_memory_lock_to_fine_grain(qp.uar->reg_addr, MLX5_DB_BLUEFLAME_BUFFER_SIZE * 2,
+                                 &gpu_ptr, hip_dev_id);
   gpu_qp->db.ptr = reinterpret_cast<uint64_t*>(gpu_ptr);
 }
 
