@@ -265,6 +265,10 @@ cache_backtrace_metrics_events(const uint32_t device_id, uint64_t timestamp_ns,
     const auto* call_stack      = "";
     const auto* line_info       = "";
 
+    // TODO: Write it when optional is supported in trace_cache
+    // const auto& _thread_info = thread_info::get(_tid, SequentTID);
+    // const auto  system_tid   = _thread_info->index_data->system_value;
+
     auto insert_event_and_sample = [&](const char* _track_name, double _value) {
         trace_cache::get_buffer_storage().store(trace_cache::pmc_event_with_sample{
             static_cast<size_t>(category_enum_id<Category>::value), _track_name,
