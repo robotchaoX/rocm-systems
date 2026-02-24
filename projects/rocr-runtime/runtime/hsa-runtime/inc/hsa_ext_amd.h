@@ -66,6 +66,7 @@
  * - 1.13 - hsa_amd_pointer_info: Added new registered field to hsa_amd_pointer_info_t
  * - 1.14 - hsa_amd_ais_file_write, hsa_amd_ais_file_read
  * - 1.15 - hsa_amd_register_system_event_handler: HSA_AMD_SYSTEM_SHUTDOWN
+ * - 1.16 - hsa_amd_memory_async_batch_copy
  */
 #define HSA_AMD_INTERFACE_VERSION_MAJOR 1
 #define HSA_AMD_INTERFACE_VERSION_MINOR 16
@@ -1812,6 +1813,68 @@ hsa_status_t HSA_API
                               hsa_signal_t completion_signal,
                               hsa_amd_sdma_engine_id_t engine_id,
                               bool force_copy_on_sdma);
+
+/**
+ * @brief Type of memory copy operation within a batch.
+ */
+typedef enum {
+  HSA_AMD_MEMORY_COPY_OP_LINEAR           = 0,  /**< Default: linear copy via copy engine */
+  HSA_AMD_MEMORY_COPY_OP_LINEAR_BROADCAST = 1,  /**< Linear broadcast: single src -> multiple dsts via copy engine */
+  HSA_AMD_MEMORY_COPY_OP_LINEAR_SWAP      = 2,  /**< Linear swap: swap contents of src and dst via copy engine */
+  HSA_AMD_MEMORY_COPY_OP_LINEAR_INDIRECT  = 3,  /**< src/dst are pointers to pointers; actual addresses resolved dynamically */
+} hsa_amd_memory_copy_op_type_t;
+
+/**
+ * @brief Describes a single copy operation within a batch.
+ */
+typedef struct hsa_amd_memory_copy_op_s {
+  void* dst;                              /**< Destination pointer */
+  hsa_agent_t dst_agent;                  /**< Destination agent */
+  const void* src;                        /**< Source pointer */
+  hsa_agent_t src_agent;                  /**< Source agent */
+  size_t size;                            /**< Size of the copy in bytes */
+  hsa_signal_t completion_signal;         /**< Completion signal for this copy operation */
+  hsa_amd_memory_copy_op_type_t type;     /**< Operation type. 0 = linear copy. */
+  uint32_t flags;                         /**< Reserved flags. Must be zero. */
+  uint64_t reserved[3];                   /**< Reserved for future use. Must be zero. */
+} hsa_amd_memory_copy_op_t;
+
+/**
+ * @brief Submits a batch of asynchronous memory copy operations.
+ *
+ * @details Submits multiple memory copy operations as a batch. Each copy
+ * operation has its own source, destination, agents, and completion signal.
+ * All operations in the batch share the same dependency signals and
+ * force_copy_on_sdma flag.
+ *
+ * Each copy operation is signaled independently via its own completion_signal
+ * field in the hsa_amd_memory_copy_op_t struct. The caller is responsible for
+ * creating and waiting on these signals.
+ *
+ * @param[in] copy_ops Array of copy operation descriptors.
+ *
+ * @param[in] num_copy_ops Number of copy operations in the array.
+ *
+ * @param[in] num_dep_signals Number of dependent signals.
+ *
+ * @param[in] dep_signals Array of dependent signals that all copy operations
+ * must wait on before starting.
+ *
+ * @param[in] force_copy_on_sdma If true, forces the copy over SDMA even when
+ * dst_agent == src_agent (which normally uses blit kernels).
+ *
+ * @retval ::HSA_STATUS_SUCCESS The batch copy was submitted successfully.
+ *
+ * @retval ::HSA_STATUS_ERROR_INVALID_ARGUMENT copy_ops is NULL, num_copy_ops
+ * is 0, any src/dst pointers are NULL, or any completion_signal is invalid.
+ */
+hsa_status_t HSA_API
+    hsa_amd_memory_async_batch_copy(const hsa_amd_memory_copy_op_t* copy_ops,
+                              uint32_t num_copy_ops,
+                              uint32_t num_dep_signals,
+                              const hsa_signal_t* dep_signals,
+                              bool force_copy_on_sdma);
+
 /**
  * @brief Reports the availability of SDMA copy engines.
  *
@@ -3668,7 +3731,7 @@ typedef enum {
   HSA_AMD_QUEUE_INFO_DOORBELL_ID,
   /*
   * Returns how many times the underlying hardware queue has been shared.
-  * @p value will be set to -1 if this queue was not allocated using 
+  * @p value will be set to -1 if this queue was not allocated using
   * hsa_amd_counted_queue_acquire. The type of this attribute is uint32_t.
   */
   HSA_QUEUE_INFO_USE_COUNT,
@@ -3787,7 +3850,7 @@ hsa_status_t HSA_API hsa_amd_ais_file_read(hsa_amd_ais_file_handle_t handle, voi
  *
  * For each successful call, hsa_amd_counted_queue_release should be called to release the
  * HSA_QUEUE_INFO_USE_COUNT. After release, the queue handle becomes invalid and must not be used.
- * 
+ *
  * hsa_amd_queue_set_priority and hsa_amd_queue_cu_set_mask cannot be used on counted queues.
  *
  * @param[in] agent Agent where to create the queue
@@ -3818,7 +3881,7 @@ hsa_status_t HSA_API hsa_amd_ais_file_read(hsa_amd_ais_file_handle_t handle, voi
  * @retval ::HSA_STATUS_ERROR_INVALID_AGENT The agent is invalid or not a GPU agent.
  *
  * @retval ::HSA_STATUS_ERROR_INVALID_QUEUE_CREATION @p type is not HSA_QUEUE_TYPE_MULTI.
- * 
+ *
  * @retval ::HSA_STATUS_ERROR_INVALID_ARGUMENT Invalid priority or NULL queue pointer.
  */
 hsa_status_t HSA_API hsa_amd_counted_queue_acquire(hsa_agent_t agent, hsa_queue_type_t type,
@@ -3829,13 +3892,13 @@ hsa_status_t HSA_API hsa_amd_counted_queue_acquire(hsa_agent_t agent, hsa_queue_
 
 /**
  * @brief Release a counted queue and decrements its use count.
- * 
+ *
  * Releases a queue that was previously acquired using hsa_amd_counted_queue_acquire.
- * Each call to this API decrements the internal use count HSA_QUEUE_INFO_USE_COUNT 
+ * Each call to this API decrements the internal use count HSA_QUEUE_INFO_USE_COUNT
  * of the underlying hardware. After this call, queue handle is invalid and must not be used.
  * Once created, the hardware queue is retained until hsa_shutdown is called to avoid costly
- * overhead of repeatedly creating new hardware queues, allowing them to be reused. 
- * 
+ * overhead of repeatedly creating new hardware queues, allowing them to be reused.
+ *
  *
  * @param[in] queue Counted queue handle returned from hsa_amd_counted_queue_acquire.
  * Must not be NULL.

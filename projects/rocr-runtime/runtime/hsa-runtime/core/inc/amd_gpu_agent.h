@@ -316,6 +316,12 @@ class GpuAgent : public GpuAgentInt {
                                   uint32_t* recommended_ids_mask) override;
 
   // @brief Override from core::Agent.
+  hsa_status_t DmaCopyBatch(const hsa_amd_memory_copy_op_t* ops,
+                            uint32_t num_ops,
+                            std::vector<core::Signal*>& dep_signals,
+                            bool force_copy_on_sdma) override;
+
+  // @brief Override from core::Agent.
   hsa_status_t DmaCopyRect(const hsa_pitched_ptr_t* dst, const hsa_dim3_t* dst_offset,
                            const hsa_pitched_ptr_t* src, const hsa_dim3_t* src_offset,
                            const hsa_dim3_t* range, hsa_amd_copy_direction_t dir,
@@ -343,7 +349,7 @@ class GpuAgent : public GpuAgentInt {
   void AcquireQueueAltScratch(ScratchInfo& scratch) override;
   void ReleaseQueueAltScratch(ScratchInfo& scratch) override;
 
-  // @brief Create a pool of shared queues for multiple user applications within a max limit 
+  // @brief Create a pool of shared queues for multiple user applications within a max limit
   hsa_status_t AcquireCountedQueue(hsa_queue_type_t type,
                                    HSA::hsa_amd_queue_priority_internal_t priority,
                                    void (*callback)(hsa_status_t, hsa_queue_t*, void*),
@@ -717,6 +723,14 @@ class GpuAgent : public GpuAgentInt {
   // @brief Releases scratch back to the driver.
   // caller must hold scratch_lock_.
   void ReleaseScratch(void* base, size_t size, bool large);
+
+  // Fan-out-in multi-engine copy: fans out each op to its recommended SDMA
+  // engine concurrently using the prologue/body/epilogue split, then fans back
+  // in via the shared out_signal. Ops may have independent src/dst/size.
+  // Engine selection uses rec_sdma_eng_id_peers_info_ by default.
+  hsa_status_t DmaCopyFanOutIn(
+      const hsa_amd_memory_copy_op_t* ops, uint32_t num_ops,
+      std::vector<core::Signal*>& dep_signals, core::Signal& out_signal);
 
   // Bind index of peer device that is connected via xGMI links
   lazy_ptr<core::Blit>& GetXgmiBlit(const core::Agent& peer_agent);

@@ -2874,7 +2874,10 @@ hipError_t ihipMemcpyBatch(void** dsts, void** srcs, size_t* sizes, size_t count
     batchCmd->release();
   }
 
-  // Handle write buffer (host to device) copies
+  // Handle write buffer (host to device) copies.
+  // This path handles kSrcAccessOrderDuringApiCall and kSrcAccessOrderAny for host sources
+  // that lack a memory object (e.g. malloc'd or stack pointers). The writeBuffer path
+  // handles kSrcAccessOrderDuringApiCall
   for (size_t idx : writeBufferIndices) {
     status = ihipMemcpy(dsts[idx], srcs[idx], sizes[idx], hipMemcpyDefault, stream, isAsync, true);
     if (status != hipSuccess) {
