@@ -770,8 +770,7 @@ hsa_status_t Runtime::GetSystemInfo(hsa_system_info_t attribute, void* value) {
         setFlag(HSA_EXTENSION_IMAGES);
       }
 
-      if (os::LibHandle lib = os::LoadLib(kAqlProfileLib)) {
-        os::CloseLib(lib);
+      if (AqlProfileLibAvailable()) {
         setFlag(HSA_EXTENSION_AMD_AQLPROFILE);
       }
 
@@ -2358,7 +2357,8 @@ Runtime::Runtime()
       internal_queue_create_notifier_user_data_(nullptr),
       ref_count_(0),
       kfd_version{},
-      ipc_sock_server_fd_(0) {
+      ipc_sock_server_fd_(0),
+      aql_profile_lib_available_(false) {
 
   virtual_mem_api_supported_ = false;
   ipc_dmabuf_supported_ = false;
@@ -2374,6 +2374,13 @@ Runtime::Runtime()
   log_file = stderr;
 }
 
+void Runtime::ProbeAqlProfileLibAvailability() {
+  if (os::LibHandle lib = os::LoadLib(kAqlProfileLib)) {
+    aql_profile_lib_available_ = true;
+    os::CloseLib(lib);
+  }
+}
+
 hsa_status_t Runtime::Load() {
   os::cpuid_t cpuinfo;
 
@@ -2387,6 +2394,7 @@ hsa_status_t Runtime::Load() {
   }
 
   flag_.Refresh();
+  ProbeAqlProfileLibAvailability();
 
   thunkLoader_ = new ThunkLoader();
   thunkLoader_->LoadThunkApiTable();

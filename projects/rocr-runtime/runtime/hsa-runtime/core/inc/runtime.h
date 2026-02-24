@@ -501,6 +501,7 @@ class Runtime {
   bool VirtualMemApiSupported() const { return virtual_mem_api_supported_; }
   bool XnackEnabled() const { return xnack_enabled_; }
   void XnackEnabled(bool enable) { xnack_enabled_ = enable; }
+  bool AqlProfileLibAvailable() const { return aql_profile_lib_available_; }
 
   Driver &AgentDriver(DriverType drv_type) {
     auto is_drv_type = [&](const std::unique_ptr<Driver> &d) {
@@ -910,12 +911,14 @@ class Runtime {
   lazy_ptr<AsyncEventsInfo> asyncSignals_;
   lazy_ptr<AsyncEventsInfo> asyncExceptions_;
  private:
+  void ProbeAqlProfileLibAvailability();
   void CheckVirtualMemApiSupport();
   int GetAmdgpuDeviceArgs(Agent *agent, ShareableHandle handle, int *drm_fd,
                           uint64_t *cpu_addr);
 
   bool virtual_mem_api_supported_;
   bool xnack_enabled_;
+  bool aql_profile_lib_available_;
 
   typedef void* ThunkHandle;
 
