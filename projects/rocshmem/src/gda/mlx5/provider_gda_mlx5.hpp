@@ -27,6 +27,7 @@
 
 extern "C" {
 #include "gda/mlx5/mlx5dv.h"
+#include "gda/mlx5/mlx5_ifc.h"
 }
 
 namespace rocshmem {
